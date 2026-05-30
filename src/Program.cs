@@ -18,17 +18,25 @@ namespace FonterraPūnahaSystem
         void PrintTraceabilityReport();
     }
 
+    public enum BatchStatus { Pending, Approved, QualityRejected, Quarantined }
+
     public class MilkBatch : ITraceable
     {
         public string BatchId { get; }
         public string FarmSource { get; set; }
         public double VolumeLiters { get; set; }
         public double Temperature { get; set; }
-        public double FatPercentage { get; set; } // Added: Key financial metric
+        public double FatPercentage { get; set; }
         public DateTime CollectionTime { get; }
-        
-        // Encapsulation: Ensures safety status cannot be tampered with arbitrarily
-        public bool IsQualityApproved { get; private set; }
+
+        public BatchStatus Status { get; private set; } = BatchStatus.Pending;
+
+        public void Approve()     => Status = BatchStatus.Approved;
+        public void Reject()      => Status = BatchStatus.QualityRejected;
+        public void Quarantine()  => Status = BatchStatus.Quarantined;
+
+        // keeps LINQ summary unchanged
+        public bool IsQualityApproved => Status == BatchStatus.Approved;
 
         public MilkBatch(string id, string farm, double volume, double temp, double fat)
         {
@@ -38,39 +46,124 @@ namespace FonterraPūnahaSystem
             Temperature = temp;
             FatPercentage = fat;
             CollectionTime = DateTime.Now;
-            IsQualityApproved = false;
         }
-
-        public void Approve() => IsQualityApproved = true;
 
         public void PrintTraceabilityReport()
         {
-            string status = IsQualityApproved ? "PASS" : "PENDING/FAIL";
-            Console.WriteLine($"[TRACE] {CollectionTime:HH:mm} | ID: {BatchId} | Temp: {Temperature}°C | Status: {status}");
+            Console.WriteLine($"[TRACE] {CollectionTime:HH:mm} | ID: {BatchId} | Temp: {Temperature}°C | Status: {Status}");
         }
     }
 
-    // Logic Class: Simulates the Quality Assurance Dept (Task 2 & 3)
+    // Task 6 — Strategy Pattern: common contract for all validation rules
+    public class ValidationResult
+    {
+        public bool IsValid { get; }
+        public bool IsCritical { get; }
+        public string Message { get; }
+        public ValidationResult(bool isValid, bool isCritical, string message)
+        {
+            IsValid = isValid; IsCritical = isCritical; Message = message;
+        }
+    }
+
+    public interface IBatchRule
+    {
+        ValidationResult Validate(MilkBatch batch);
+    }
+
+    // isCritical: false — fat failures downgrade the batch, they don't quarantine it
+    public class FatContentRule : IBatchRule
+    {
+        public ValidationResult Validate(MilkBatch batch)
+        {
+            if (batch.FatPercentage < 3.5)
+                return new ValidationResult(false, false,
+                    $"Fat content {batch.FatPercentage}% is below minimum 3.5%");
+            return new ValidationResult(true, false, "Fat content meets standards");
+        }
+    }
+
+    public class VolumeRule : IBatchRule
+    {
+        public ValidationResult Validate(MilkBatch batch)
+        {
+            if (batch.VolumeLiters < 1000.0)
+                return new ValidationResult(false, false,
+                    $"Volume {batch.VolumeLiters}L is below minimum 1000L");
+            return new ValidationResult(true, false, "Volume meets minimum threshold");
+        }
+    }
+
+    // Task 6 — Observer Pattern: event bus for batch lifecycle notifications
+    public enum BatchEventType { Approved, QualityRejected, SafetyBreach }
+
+    public class BatchEvent
+    {
+        public MilkBatch Batch { get; }
+        public BatchEventType Type { get; }
+        public string Message { get; }
+        public BatchEvent(MilkBatch batch, BatchEventType type, string message)
+        {
+            Batch = batch; Type = type; Message = message;
+        }
+    }
+
+    public interface IBatchObserver
+    {
+        void OnBatchProcessed(BatchEvent e);
+    }
+
+    // Only reacts to SafetyBreach — early return lets it ignore everything else
+    public class QuarantineAlertObserver : IBatchObserver
+    {
+        public void OnBatchProcessed(BatchEvent e)
+        {
+            if (e.Type != BatchEventType.SafetyBreach) return;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  🚨  QUARANTINE ALERT: {e.Batch.BatchId} — {e.Message}");
+            Console.ResetColor();
+        }
+    }
+
+    // Logic Class: Simulates the Quality Assurance Dept (Task 2, 3 & 6)
     public class QualityAssuranceService
     {
         private const double MaxTempCelsius = 6.0;
+        private readonly List<IBatchRule> _rules = new() { new FatContentRule(), new VolumeRule() };
+        private readonly List<IBatchObserver> _observers = new();
+
+        public void AddObserver(IBatchObserver observer) => _observers.Add(observer);
+
+        private void Notify(BatchEvent e)
+        {
+            foreach (var obs in _observers) obs.OnBatchProcessed(e);
+        }
 
         public void ProcessBatch(MilkBatch batch)
         {
-            // Business Rule: Safety Check (Exception-based control flow)
             if (batch.Temperature > MaxTempCelsius)
+            {
+                batch.Quarantine();
+                Notify(new BatchEvent(batch, BatchEventType.SafetyBreach,
+                    $"Temperature {batch.Temperature}°C exceeds safety limit!"));
                 throw new SafetyThresholdException($"CRITICAL: Temperature {batch.Temperature}°C exceeds safety limit!");
+            }
 
-            // Business Rule: Quality Check
-            if (batch.FatPercentage >= 3.5)
+            foreach (var rule in _rules)
             {
-                batch.Approve();
-                Console.WriteLine($"SUCCESS: Batch {batch.BatchId} approved for processing.");
+                var result = rule.Validate(batch);
+                if (!result.IsValid)
+                {
+                    batch.Reject();
+                    Console.WriteLine($"DOWNGRADED: Batch {batch.BatchId} — {result.Message}");
+                    Notify(new BatchEvent(batch, BatchEventType.QualityRejected, result.Message));
+                    return;
+                }
             }
-            else
-            {
-                Console.WriteLine($"REJECTED: Batch {batch.BatchId} quality not met.");
-            }
+
+            batch.Approve();
+            Console.WriteLine($"SUCCESS: Batch {batch.BatchId} approved for processing.");
+            Notify(new BatchEvent(batch, BatchEventType.Approved, $"Batch {batch.BatchId} approved."));
         }
     }
 
@@ -89,6 +182,7 @@ namespace FonterraPūnahaSystem
             };
 
             var qaService = new QualityAssuranceService();
+            qaService.AddObserver(new QuarantineAlertObserver());
 
             foreach (var batch in dailyCollections)
             {
