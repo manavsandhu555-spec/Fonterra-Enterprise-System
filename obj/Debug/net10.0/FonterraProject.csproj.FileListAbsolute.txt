@@ -1,12 +1,13 @@
+C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.AssemblyInfoInputs.cache
+C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.AssemblyInfo.cs
+C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.csproj.CoreCompileInputs.cache
+C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.sourcelink.json
 C:\Users\manav\FonterraProject\bin\Debug\net10.0\FonterraProject.exe
 C:\Users\manav\FonterraProject\bin\Debug\net10.0\FonterraProject.deps.json
 C:\Users\manav\FonterraProject\bin\Debug\net10.0\FonterraProject.runtimeconfig.json
 C:\Users\manav\FonterraProject\bin\Debug\net10.0\FonterraProject.dll
 C:\Users\manav\FonterraProject\bin\Debug\net10.0\FonterraProject.pdb
-C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.AssemblyInfoInputs.cache
-C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.AssemblyInfo.cs
-C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.csproj.CoreCompileInputs.cache
 C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.dll
 C:\Users\manav\FonterraProject\obj\Debug\net10.0\refint\FonterraProject.dll
 C:\Users\manav\FonterraProject\obj\Debug\net10.0\FonterraProject.pdb

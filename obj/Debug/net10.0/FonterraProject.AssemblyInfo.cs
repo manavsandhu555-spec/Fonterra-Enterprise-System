@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FonterraProject")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fb002fb3c53e3f12ad071576b1d93b95a73a87a6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04b32cb30a1c5c74301257ba41202c13924cd591")]
 [assembly: System.Reflection.AssemblyProductAttribute("FonterraProject")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FonterraProject")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
