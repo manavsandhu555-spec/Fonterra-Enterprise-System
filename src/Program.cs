@@ -66,13 +66,13 @@ namespace FonterraPūnahaSystem
         }
     }
 
-    public interface IBatchRule
+    public interface IValidationRule
     {
         ValidationResult Validate(MilkBatch batch);
     }
 
     // isCritical: false — fat failures downgrade the batch, they don't quarantine it
-    public class FatContentRule : IBatchRule
+    public class FatContentRule : IValidationRule
     {
         public ValidationResult Validate(MilkBatch batch)
         {
@@ -83,7 +83,7 @@ namespace FonterraPūnahaSystem
         }
     }
 
-    public class VolumeRule : IBatchRule
+    public class VolumeRule : IValidationRule
     {
         public ValidationResult Validate(MilkBatch batch)
         {
@@ -129,10 +129,10 @@ namespace FonterraPūnahaSystem
     public class QualityAssuranceService
     {
         private const double MaxTempCelsius = 6.0;
-        private readonly List<IBatchRule> _rules = new() { new FatContentRule(), new VolumeRule() };
+        private readonly List<IValidationRule> _rules = new() { new FatContentRule(), new VolumeRule() };
         private readonly List<IBatchObserver> _observers = new();
 
-        public void AddObserver(IBatchObserver observer) => _observers.Add(observer);
+        public void Subscribe(IBatchObserver observer) => _observers.Add(observer);
 
         private void Notify(BatchEvent e)
         {
@@ -182,7 +182,7 @@ namespace FonterraPūnahaSystem
             };
 
             var qaService = new QualityAssuranceService();
-            qaService.AddObserver(new QuarantineAlertObserver());
+            qaService.Subscribe(new QuarantineAlertObserver());
 
             foreach (var batch in dailyCollections)
             {
